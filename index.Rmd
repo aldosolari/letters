@@ -18,8 +18,35 @@ knitr::opts_chunk$set(
 Supplemental R code to "Exploratory inference: localizing relevant effects with confidence"
 by A. Solari and J. Goeman. 
 
-```{r}
+## Introduction
+
+Suppose we have a moderate-scale spatial problem, structured in a $m = 100 × 100$ square matrix, where for each unit (pixel) we measure the local magnitude of the effect. 
+
+Assume a random sample of size $n=20$ from $m$-variate Gaussian
+ $$\mathcal{N}_m(\mu, \Sigma)$$
+ with $\mu=(\mu_1,\ldots,\mu_m)^\mathsf{T}$ and $\mathrm{diag}(\Sigma) = (\sigma^2_1,\ldots,\sigma_m^2)^\mathsf{T}$. 
+
+Load the $n\times m$ data matrix:
+
+```{r, message=F, warning=F, error=F, comment=NA}
+library(repmis)
+source_data("https://github.com/aldosolari/letters/blob/main/rawdata.RData?raw=true")
+x[1:10, 1:5]
+```
+
+ 
+The parameter of interest is the standardized effect
+$$
+ \theta_i = \frac{\mu_i}{\sigma_i}
+$$
+
+
+
+
+```{r, message=F, warning=F, error=F, comment=NA}
 library(repmis)
 source_data("https://github.com/aldosolari/letters/blob/main/letters.RData?raw=true")
+source_data("https://github.com/aldosolari/letters/blob/main/rawdata.RData?raw=true")
+ls()
 ```
 

@@ -339,12 +339,37 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <p>Supplemental R code to “Exploratory inference: localizing relevant effects with confidence” by A. Solari and J. Goeman.</p>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Suppose we have a moderate-scale spatial problem, structured in a <span class="math inline">\(m = 100 × 100\)</span> square matrix, where for each unit (pixel) we measure the local magnitude of the effect.</p>
+<p>Assume a random sample of size <span class="math inline">\(n=20\)</span> from <span class="math inline">\(m\)</span>-variate Gaussian <span class="math display">\[\mathcal{N}_m(\mu, \Sigma)\]</span> with <span class="math inline">\(\mu=(\mu_1,\ldots,\mu_m)^\mathsf{T}\)</span> and <span class="math inline">\(\mathrm{diag}(\Sigma) = (\sigma^2_1,\ldots,\sigma_m^2)^\mathsf{T}\)</span>.</p>
+<p>Load the <span class="math inline">\(n\times m\)</span> data matrix:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(repmis)</span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">source_data</span>(<span class="st">&quot;https://github.com/aldosolari/letters/blob/main/letters.RData?raw=true&quot;</span>)</span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; Downloading data from: https://github.com/aldosolari/letters/blob/main/letters.RData?raw=true</span></span>
-<span id="cb1-4"><a href="#cb1-4"></a><span class="co">#&gt; SHA-1 hash of the downloaded data file is:</span></span>
-<span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt; f7c310acd69e69c02a14413733f3ad382c200dd5</span></span>
-<span id="cb1-6"><a href="#cb1-6"></a><span class="co">#&gt; [1] &quot;lttrs&quot;</span></span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">source_data</span>(<span class="st">&quot;https://github.com/aldosolari/letters/blob/main/rawdata.RData?raw=true&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3"></a>[<span class="dv">1</span>] <span class="st">&quot;x&quot;</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a>x[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span>
+<span id="cb1-5"><a href="#cb1-5"></a>            [,<span class="dv">1</span>]       [,<span class="dv">2</span>]       [,<span class="dv">3</span>]        [,<span class="dv">4</span>]       [,<span class="dv">5</span>]</span>
+<span id="cb1-6"><a href="#cb1-6"></a> [<span class="dv">1</span>,] <span class="fl">-2.2419026</span> <span class="fl">-6.7467732</span>  <span class="fl">1.0132741</span>  <span class="fl">4.10228548</span> <span class="fl">-2.8416263</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a> [<span class="dv">2</span>,] <span class="fl">-0.9207100</span>  <span class="fl">3.3511482</span> <span class="fl">-0.1141870</span> <span class="fl">-1.13909203</span>  <span class="fl">1.0275348</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a> [<span class="dv">3</span>,]  <span class="fl">6.2348333</span>  <span class="fl">0.6134925</span> <span class="fl">-0.1714818</span> <span class="fl">-4.88287085</span> <span class="fl">-0.9867675</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a> [<span class="dv">4</span>,]  <span class="fl">0.2820336</span> <span class="fl">-4.5525477</span>  <span class="fl">5.4744091</span>  <span class="fl">0.72521392</span> <span class="fl">-1.3901704</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a> [<span class="dv">5</span>,]  <span class="fl">0.5171509</span>  <span class="fl">5.0152597</span> <span class="fl">-0.9030839</span> <span class="fl">-0.55556545</span> <span class="fl">-3.8064743</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a> [<span class="dv">6</span>,]  <span class="fl">6.8602599</span>  <span class="fl">1.7058569</span>  <span class="fl">6.0658824</span>  <span class="fl">0.02305674</span> <span class="fl">-0.1801109</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a> [<span class="dv">7</span>,]  <span class="fl">1.8436648</span> <span class="fl">-1.1802859</span> <span class="fl">-6.1950112</span>  <span class="fl">1.54112160</span> <span class="fl">-3.1396179</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a> [<span class="dv">8</span>,] <span class="fl">-5.0602449</span>  <span class="fl">3.5805026</span>  <span class="fl">2.3384550</span> <span class="fl">-1.48264013</span> <span class="fl">-6.6717677</span></span>
+<span id="cb1-14"><a href="#cb1-14"></a> [<span class="dv">9</span>,] <span class="fl">-2.7474114</span>  <span class="fl">3.5125340</span>  <span class="fl">0.4954170</span>  <span class="fl">2.57750619</span> <span class="fl">-1.5209061</span></span>
+<span id="cb1-15"><a href="#cb1-15"></a>[<span class="dv">10</span>,] <span class="fl">-1.7826479</span>  <span class="fl">3.2863243</span>  <span class="fl">0.8637663</span> <span class="fl">-0.88194625</span>  <span class="fl">3.6759864</span></span></code></pre></div>
+<p>The parameter of interest is the standardized effect <span class="math display">\[
+ \theta_i = \frac{\mu_i}{\sigma_i}
+\]</span></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">library</span>(repmis)</span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="kw">source_data</span>(<span class="st">&quot;https://github.com/aldosolari/letters/blob/main/letters.RData?raw=true&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3"></a>[<span class="dv">1</span>] <span class="st">&quot;lttrs&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a><span class="kw">source_data</span>(<span class="st">&quot;https://github.com/aldosolari/letters/blob/main/rawdata.RData?raw=true&quot;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5"></a>[<span class="dv">1</span>] <span class="st">&quot;x&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a><span class="kw">ls</span>()</span>
+<span id="cb2-7"><a href="#cb2-7"></a>[<span class="dv">1</span>] <span class="st">&quot;lttrs&quot;</span> <span class="st">&quot;x&quot;</span>    </span></code></pre></div>
+</div>
 
 
 
