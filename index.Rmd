@@ -18,3 +18,8 @@ knitr::opts_chunk$set(
 Supplemental R code to "Exploratory inference: localizing relevant effects with confidence"
 by A. Solari and J. Goeman. 
 
+```{r}
+library(repmis)
+source_data("https://github.com/aldosolari/letters/blob/main/letters.RData?raw=true")
+```
+
