@@ -3,7 +3,7 @@ title: "Letters"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Letters}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,107 +15,131 @@ knitr::opts_chunk$set(
 )
 ```
 
-Supplemental R code to "Exploratory inference: localizing relevant effects with confidence"
-by A. Solari and J. Goeman. 
+*Supplemental R code to "Exploratory inference: localizing relevant effects with confidence"
+by A. Solari and J. Goeman.* 
+
+## Set up
+
+Install and load the `hommel` and  `repmis` R packages:
+
+```{r, message=F, warning=F, error=F, comment=NA, results='hide'}
+require("hommel") || install.packages("hommel")
+require("repmis") || install.packages("repmis")
+```
+
+## Load the data
+
+```{r, message=F, warning=F, error=F, comment=NA, results='hide'}
+source_data("https://github.com/aldosolari/letters/blob/main/rawdata.RData?raw=true")
+source_data("https://github.com/aldosolari/letters/blob/main/letters.RData?raw=true")
+```
 
 ## Introduction
 
-Suppose we have a moderate-scale spatial problem, structured in a $m = 100 × 100$ square matrix, where for each unit (pixel) we measure the local magnitude of the effect. 
-
-Assume a random sample of size $n=30$ from $m$-variate Gaussian
- $$\mathcal{N}_m(\mu, \Sigma)$$
+Suppose we have a moderate-scale spatial problem, structured in a $m = 100 × 100$ square matrix, where for each variable (pixel) we measure the local magnitude of the effect. Assume a random sample of size $n=30$ from $m$-variate Gaussian
+ $\mathcal{N}_m(\mu, \Sigma)$
  with $\mu=(\mu_1,\ldots,\mu_m)^\mathsf{T}$ and $\mathrm{diag}(\Sigma) = (\sigma^2_1,\ldots,\sigma_m^2)^\mathsf{T}$. 
 
-Load the $n\times m$ data matrix (observations $\times$ voxels):
+To look at the $n\times m$ data matrix (observations $\times$ voxels):
 
 ```{r, message=F, warning=F, error=F, comment=NA}
-library(repmis)
-source_data("https://github.com/aldosolari/letters/blob/main/rawdata.RData?raw=true")
-m = ncol(x)
-sqrtm = sqrt(m)
-n = nrow(x)
 x[1:3, 1:6]
+```
+Store the sample size $n$ and the dimension $m$:
+
+```{r}
+n <- nrow(x)
+m <- ncol(x)
 ```
 
 The parameter of interest is the effect size
-$$
- \theta_i = \frac{\mu_i}{\sigma_i} \qquad i=1,\ldots,m
-$$
+$\theta_i = \mu_i/\sigma_i$ for $i=1,\ldots,m$. 
 
-To get point estimates $\hat{\theta}_i= \hat{\mu}_i / \hat{\sigma}_i$: 
+To get the point estimates $\hat{\theta}_i= \hat{\mu}_i / \hat{\sigma}_i$: 
 
 ```{r}
-hatmu = apply(x,2,mean)
-hatsigma = sqrt(apply(x,2,var))
-thetahat = hatmu/hatsigma
+muhat <- apply(x,2,mean)
+sigmahat <- sqrt(apply(x,2,var))
+thetahat <- muhat / sigmahat
 ```
 
 Plot of point estimates $\hat{\theta}_i$ in a $100 × 100$ square:
 
 ```{r, message=F, warning=F, error=F, comment=NA}
-thetahat_mat <- matrix(thetahat,nrow=sqrtm)
+thetahat_mat <- matrix(thetahat,nrow=sqrt(m))
 image(t(apply(thetahat_mat, 2, rev)), asp=1)
 ```
 
-
-We will consider
-$$\left\{\begin{array}{ll}
--\Delta \leq \theta_i \leq \Delta & \mathrm{irrelevant \,\,effect}\\
-\theta_i > \Delta & \mathrm{relevant\,\,(positive)\,\,effect}\\
-\theta_i < -\Delta & \mathrm{relevant\,\,(negative)\,\,effect}\\
-          \end{array}\right.$$
-and we take the conventional value of $$\Delta=0.2$$ for an effect of small magnitude. 
-
-For testing 
-$$H_i : \theta_i \in [-\Delta,\Delta]$$
+We take the conventional value of $\Delta=0.2$ for an effect of small magnitude.
+For testing $H_i : \theta_i \in [-\Delta,\Delta]$
 we compute the $p$-values as
-$$p_i = \mathrm{pr}(\mathcal{F}_{1,n-1, n\Delta^2} \geq n \hat{\theta}_i^2)$$
+$p_i = \mathrm{pr}(\mathcal{F}_{1,n-1, n\Delta^2} \geq n \hat{\theta}_i^2)$
 where $\mathcal{F}$ denotes the non-central F distribution with degrees of freedom 1 and $n-1$ and non-centrality parameter $n\Delta^2$.
 
-To get $p$-values $p_i$: 
+To compute the $p$-values $p_i$: 
 ```{r}
-Delta = 0.2
-pval = sapply(1:m, function(i) 
-  pf( n*(thetahat[i])^2,    df1=1,df2=n-1,ncp=n*(Delta^2), lower.tail = F) )
-pval_mat = matrix(pval,nrow=sqrtm)
+Delta <- 0.2
+pval <- sapply(1:m, function(i) 
+  pf( n*(thetahat[i])^2, df1=1, df2=n-1, ncp=n*(Delta^2), lower.tail = F) 
+  )
 ```
 
-Plot of $p$-values $p_i \leq \alpha = 5\%$  in a $100 × 100$ square:
+Plot of $p$-values $p_i \leq 5\%$:
 
 ```{r}
-alpha = 0.05
-image(t(apply(pval_mat< alpha, 2, rev)), col=0:1, asp=1)
+pval_mat <- matrix(pval, nrow=sqrt(m))
+image(t(apply(pval_mat <= 0.05, 2, rev)), col=0:1, asp=1)
 ```
 
-In our toy example, we assume that ``Alphabet theory''  conjectures that relevant effects manifest themselves only with the shape of the letters of the alphabet A, B, C, $\ldots$, Z. 
+## Simultaneous inference
 
-To select the letter A:
+We set the target confidence level to $\alpha=0.05$.
+
+```{r}
+alpha <- 0.05
+```
+
+We use the `hommel` package to calculate the lower bound $\underline{r}_{S}$ for the number of relevant effects in $S$ by using closed testing with Simes local tests:
+
+```{r}
+res <- hommel(pval)
+summary(res)
+```
+
+With 95% confidence, the overall number of relevant effects is at least 1271. 
+
+In our toy example, we assume that relevant effects manifest themselves only with the shape of the letters of the alphabet A, B, C, $\ldots$, Z. 
+
+To plot the letter A:
 
 ```{r, message=F, warning=F, error=F, comment=NA}
-source_data("https://github.com/aldosolari/letters/blob/main/letters.RData?raw=true")
-S <- lttrs[["A"]]
-image(t(apply(S, 2, rev)), col=0:1, asp=1)
+names(lttrs)
+A <- lttrs[["A"]]
+image(t(apply(A, 2, rev)), col=0:1, asp=1)
 ```
 
-To get the lower bound $\underline{r}_S$ for the number of relevant effects in $S$:
+To get the size of A:
+```{r, message=F, warning=F, error=F, comment=NA}
+sum(A)
+```
+
+To get the lower bound $\underline{r}_A$ for the number of relevant effects in $A$:
 
 ```{r}
-library(hommel)
-res=hommel(pval)
-discoveries(res,  ix=which(S==TRUE), alpha=alpha)
+discoveries(res, ix=which(A==TRUE), alpha=alpha)
 ```
 
-To get the lower bound $\underline{r}_S$ for the proportion of relevant effects in $S$:
+To get the lower bound $\underline{r}_A$ for the proportion of relevant effects in $A$:
 
 ```{r}
-tdp(res,  ix=which(S==TRUE), alpha=alpha)
+tdp(res, ix=which(A==TRUE), alpha=alpha)
 ```
 
-To get the lower bound $\underline{r}_{S^c}$ for the proportion of relevant effects outside $S$:
+To get the lower bound $\underline{r}_{A^c}$ for the proportion of relevant effects outside $A$:
 
 ```{r}
-tdp(res,  ix=which(S==FALSE), alpha=alpha)
+tdp(res, ix=which(A==FALSE), alpha=alpha)
 ```
 
-
+Find the the most likely letter!
 
