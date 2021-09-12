@@ -63,13 +63,6 @@ sigmahat <- sqrt(apply(x,2,var))
 thetahat <- muhat / sigmahat
 ```
 
-Plot of point estimates $\hat{\theta}_i$ in a $100 × 100$ square:
-
-```{r, message=F, warning=F, error=F, comment=NA}
-thetahat_mat <- matrix(thetahat,nrow=sqrt(m))
-image(t(apply(thetahat_mat, 2, rev)), asp=1)
-```
-
 We take the conventional value of $\Delta=0.2$ for an effect of small magnitude.
 For testing $H_i : \theta_i \in [-\Delta,\Delta]$
 we compute the $p$-values as
@@ -84,11 +77,11 @@ pval <- sapply(1:m, function(i)
   )
 ```
 
-Plot of $p$-values $p_i \leq 5\%$:
+Plot of $p$-values $p_i \leq 0.01$:
 
 ```{r}
 pval_mat <- matrix(pval, nrow=sqrt(m))
-image(t(apply(pval_mat <= 0.05, 2, rev)), col=0:1, asp=1)
+image(t(apply(pval_mat <= 0.01, 2, rev)), col=0:1, asp=1)
 ```
 
 ## Simultaneous inference
